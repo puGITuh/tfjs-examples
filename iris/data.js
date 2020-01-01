@@ -77,7 +77,9 @@ const IRIS_DATA = [
 ];
 
 /**
- * Convert Iris data arrays to `tf.Tensor`s.
+ * Convert Iris data arrays to `tf.Tensor`s. 
+ * 
+ * Es wir pro Sorte der Pflanze convertToTensor durchgeführt
  *
  * @param data The Iris input feature data, an `Array` of `Array`s, each element
  *   of which is assumed to be a length-4 `Array` (for petal length, petal
@@ -95,6 +97,7 @@ const IRIS_DATA = [
  */
 function convertToTensors(data, targets, testSplit) {
   const numExamples = data.length;
+  // der datenarray und zielarray müssen die gleiche länge haben
   if (numExamples !== targets.length) {
     throw new Error('data and split have different numbers of examples');
   }
@@ -104,29 +107,37 @@ function convertToTensors(data, targets, testSplit) {
   for (let i = 0; i < numExamples; ++i) {
     indices.push(i);
   }
+  // mischt den Array indices mit den Zahlen 0-(numExamples-1)
   tf.util.shuffle(indices);
 
   const shuffledData = [];
   const shuffledTargets = [];
   for (let i = 0; i < numExamples; ++i) {
+    // die Reihenfolge der Zahlen im Array (indices) stimmt nicht mehr mit dem Inhalt überein, somit werden
+    // die dataarray und targetsarray mit zufallszahlen bzw. ZufallsWerten in den Shufflearray gefüllt
+    // für data und targets
     shuffledData.push(data[indices[i]]);
     shuffledTargets.push(targets[indices[i]]);
   }
 
-  // Split the data into a training set and a tet set, based on `testSplit`.
+  // Split the data into a training set and a test set, based on `testSplit`.
   const numTestExamples = Math.round(numExamples * testSplit);
   const numTrainExamples = numExamples - numTestExamples;
 
   const xDims = shuffledData[0].length;
 
   // Create a 2D `tf.Tensor` to hold the feature data.
+  // shuffleData enthaltet alle Datenarray, numExamples ist length von Daten, und xDims ist die Breite der Daten
+  // somit weiss man y und x Koordinaten von shuffledData
   const xs = tf.tensor2d(shuffledData, [numExamples, xDims]);
 
   // Create a 1D `tf.Tensor` to hold the labels, and convert the number label
-  // from the set {0, 1, 2} into one-hot encoding (.e.g., 0 --> [1, 0, 0]).
+  // from the set {0, 1, 2} into one-hot encoding (.e.g., 0 --> [1, 0, 0], 1 --> [0, 1, 0], 2 --> [0, 0, 1]).
+  // wird umkonvertiert von 0-2 in z.B. 2 --> [0, 0, 1]
   const ys = tf.oneHot(tf.tensor1d(shuffledTargets).toInt(), IRIS_NUM_CLASSES);
 
   // Split the data into training and test sets, using `slice`.
+  // hier werden die Daten der Array aufgeteilt
   const xTrain = xs.slice([0, 0], [numTrainExamples, xDims]);
   const xTest = xs.slice([numTrainExamples, 0], [numTestExamples, xDims]);
   const yTrain = ys.slice([0, 0], [numTrainExamples, IRIS_NUM_CLASSES]);
@@ -158,10 +169,12 @@ export function getIrisData(testSplit) {
       dataByClass.push([]);
       targetsByClass.push([]);
     }
+    //hier werden die Daten aufgesplittet Datenteil und Endziel 0-2 siehe IrisKlasse
     for (const example of IRIS_DATA) {
-      const target = example[example.length - 1];
-      const data = example.slice(0, example.length - 1);
-      dataByClass[target].push(data);
+      const target = example[example.length - 1];//in 5-1 der letzte Index ist das Ziel z.B. 0 für Iris-setosa
+      const data = example.slice(0, example.length - 1);//hier die Daten werden als neues Objekt zurückgegeben
+      // gleicher Index wird in Ziel (target) und Daten (data) abgefüllt
+      dataByClass[target].push(data);//es werden die Klassen zugeteilt alle 0, 1 oder 2
       targetsByClass[target].push(target);
     }
 
@@ -169,6 +182,7 @@ export function getIrisData(testSplit) {
     const yTrains = [];
     const xTests = [];
     const yTests = [];
+    // für jede Klasse z.B. Iris-setosa werden die entsprechenden Array zurück gegeben
     for (let i = 0; i < IRIS_CLASSES.length; ++i) {
       const [xTrain, yTrain, xTest, yTest] =
           convertToTensors(dataByClass[i], targetsByClass[i], testSplit);
@@ -179,6 +193,7 @@ export function getIrisData(testSplit) {
     }
 
     const concatAxis = 0;
+    // hier werden alle Daten von allen Iris Sorten zusammen mit jeweils 0 zurückgeliefert
     return [
       tf.concat(xTrains, concatAxis), tf.concat(yTrains, concatAxis),
       tf.concat(xTests, concatAxis), tf.concat(yTests, concatAxis)

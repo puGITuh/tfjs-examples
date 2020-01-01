@@ -40,6 +40,9 @@ export async function loadHostedPretrainedModel(url) {
   ui.status('Loading pretrained model from ' + url);
   try {
     const model = await tf.loadLayersModel(url);
+    // gebe das Model aus
+    console.log(model);
+    console.log(url);
     ui.status('Done loading pretrained model.');
     return model;
   } catch (err) {

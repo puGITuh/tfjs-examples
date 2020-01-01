@@ -103,9 +103,11 @@ function logitsToSpans(logits) {
 }
 
 function renderLogits(logits, parentElement) {
+  // sofern es elemente hätte, werden sie entfernt
   while (parentElement.firstChild) {
     parentElement.removeChild(parentElement.firstChild);
   }
+  // logits werden zu Span Tags umgewandelt und hinzugefügt
   logitsToSpans(logits).map(logitSpan => {
     parentElement.appendChild(logitSpan);
   });

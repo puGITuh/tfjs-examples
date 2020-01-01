@@ -99,22 +99,23 @@ async function predictOnManualInput(model) {
   // `predict` call is released at the end.
   tf.tidy(() => {
     // Prepare input data as a 2D `tf.Tensor`.
+    //holt sich die angefragten Daten vom UI textboxen
     const inputData = ui.getManualInputData();
     const input = tf.tensor2d([inputData], [1, 4]);
 
     // Call `model.predict` to get the prediction output as probabilities for
     // the Iris flower categories.
-
-    const predictOut = model.predict(input);
+// model ist eine vorgefertigter hier tf.sequential
+    const predictOut = model.predict(input);//sagt Blüte voraus
     const logits = Array.from(predictOut.dataSync());
     const winner = data.IRIS_CLASSES[predictOut.argMax(-1).dataSync()[0]];
-    ui.setManualInputWinnerMessage(winner);
+    ui.setManualInputWinnerMessage(winner);//gibt die Vorhergesagte Blüte an
     ui.renderLogitsForManualInput(logits);
   });
 }
 
 /**
- * Draw confusion matrix.
+ * Draw confusion matrix. Verwirrungsmatrix
  */
 async function calculateAndDrawConfusionMatrix(model, xTest, yTest) {
   const [preds, labels] = tf.tidy(() => {
@@ -146,8 +147,9 @@ async function evaluateModelOnTestData(model, xTest, yTest) {
   ui.clearEvaluateTable();
 
   tf.tidy(() => {
-    const xData = xTest.dataSync();
-    const yTrue = yTest.argMax(-1).dataSync();
+    const xData = xTest.dataSync();//lädt die Wert synchron herunter
+    const yTrue = yTest.argMax(-1).dataSync();//argMax gibt maximalen index zurück
+    // Vorhersagen predict
     const predictOut = model.predict(xTest);
     const yPred = predictOut.argMax(-1);
     ui.renderEvaluateTable(
@@ -165,19 +167,23 @@ const HOSTED_MODEL_JSON_URL =
  * The main function of the Iris demo.
  */
 async function iris() {
+  // holt sämtliche Daten aufbereitet zurück
   const [xTrain, yTrain, xTest, yTest] = data.getIrisData(0.15);
 
   const localLoadButton = document.getElementById('load-local');
   const localSaveButton = document.getElementById('save-local');
   const localRemoveButton = document.getElementById('remove-local');
 
+// hier wird selber trainiert
   document.getElementById('train-from-scratch')
       .addEventListener('click', async () => {
+        // es wird trainiert
         model = await trainModel(xTrain, yTrain, xTest, yTest);
+        // 
         await evaluateModelOnTestData(model, xTest, yTest);
         localSaveButton.disabled = false;
       });
-
+// hier wird online geladen
   if (await loader.urlExists(HOSTED_MODEL_JSON_URL)) {
     ui.status('Model available: ' + HOSTED_MODEL_JSON_URL);
     const button = document.getElementById('load-pretrained-remote');
